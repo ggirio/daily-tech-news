@@ -1,6 +1,6 @@
 import os
 from typing import List, Dict
-from anthropic import Anthropic
+from anthropic import AnthropicBedrock
 from .fetchers.base import NewsItem
 
 
@@ -8,7 +8,23 @@ class AIAnalyzer:
     """Claude APIを使ってニュースを分析・要約するクラス"""
 
     def __init__(self, api_key: str):
-        self.client = Anthropic(api_key=api_key)
+        # 環境変数でBedrockプロキシが指定されている場合はそちらを使う
+        use_bedrock = os.getenv("CLAUDE_CODE_USE_BEDROCK") == "1"
+        bedrock_base_url = os.getenv("ANTHROPIC_BEDROCK_BASE_URL")
+
+        if use_bedrock and bedrock_base_url:
+            # LINE社内Bedrockプロキシを使用
+            self.client = AnthropicBedrock(
+                aws_access_key=os.getenv("AWS_ACCESS_KEY_ID", "anything_is_fine"),
+                aws_secret_key=os.getenv("AWS_SECRET_ACCESS_KEY", "anything_is_fine"),
+                aws_session_token=api_key,  # セッショントークンをここに渡す
+                aws_region=os.getenv("AWS_REGION", "us-east-1"),
+                base_url=bedrock_base_url
+            )
+        else:
+            # 通常のAnthropic APIを使用
+            from anthropic import Anthropic
+            self.client = Anthropic(api_key=api_key)
 
     def rank_news(self, news_items: List[NewsItem], top_n: int = 5) -> List[NewsItem]:
         """
