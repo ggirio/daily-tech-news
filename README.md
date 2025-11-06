@@ -1,6 +1,6 @@
 # Daily Tech News Bot
 
-毎日技術ニュースを収集し、Claude AIで分析してSlackに通知するボットです。
+毎日技術ニュースを収集し、Claude AIで分析してGitHub Issueに通知するボットです。
 
 ## 特徴
 
@@ -8,7 +8,7 @@
 - Claude AIによる話題性の評価と記事選定
 - 2-3行の簡潔な要約とユーモアあるコメント生成
 - 重複ニュースの自動除外
-- Slack Block Kitによるリッチな通知
+- GitHub Issueでのリッチな通知（Markdown形式）
 - GitHub Actionsで平日朝9時に自動実行
 
 ## セットアップ
@@ -38,7 +38,8 @@ cp .env.example .env
 
 ```env
 ANTHROPIC_API_KEY=your_claude_api_key_here
-SLACK_WEBHOOK_URL=your_slack_webhook_url_here
+GITHUB_TOKEN=your_github_token_here
+GITHUB_REPOSITORY=owner/repo
 ```
 
 #### Claude API キーの取得方法
@@ -48,15 +49,17 @@ SLACK_WEBHOOK_URL=your_slack_webhook_url_here
 3. API Keysページで新しいキーを生成
 4. 生成されたキーを`.env`の`ANTHROPIC_API_KEY`に設定
 
-#### Slack Webhook URLの取得方法
+#### GitHub Tokenの取得方法（ローカル実行用）
 
-1. [Slack API](https://api.slack.com/apps)にアクセス
-2. "Create New App" → "From scratch"を選択
-3. アプリ名とワークスペースを選択
-4. "Incoming Webhooks"を有効化
-5. "Add New Webhook to Workspace"をクリック
-6. 通知先のチャンネルを選択
-7. 生成されたWebhook URLを`.env`の`SLACK_WEBHOOK_URL`に設定
+1. [GitHub Settings > Developer settings > Personal access tokens > Tokens (classic)](https://github.com/settings/tokens)にアクセス
+2. "Generate new token" → "Generate new token (classic)"を選択
+3. Note（説明）を入力（例: "Daily Tech News Bot"）
+4. "repo"スコープにチェック
+5. "Generate token"をクリック
+6. 生成されたトークンを`.env`の`GITHUB_TOKEN`に設定
+7. `GITHUB_REPOSITORY`には`owner/repo`形式でリポジトリを指定（例: `your-username/daily-tech-news`）
+
+**注意**: GitHub Actionsでは自動的に`GITHUB_TOKEN`が利用できるため、ローカルでのテスト実行時のみPersonal Access Tokenが必要です。
 
 ### 4. ローカルでのテスト実行
 
@@ -82,12 +85,22 @@ git push -u origin main
 リポジトリの Settings > Secrets and variables > Actions で以下のシークレットを追加:
 
 - `ANTHROPIC_API_KEY`: Claude APIキー
-- `SLACK_WEBHOOK_URL`: Slack Webhook URL
 
-### 3. GitHub Actionsの有効化
+**注意**: `GITHUB_TOKEN`と`GITHUB_REPOSITORY`はGitHub Actionsで自動的に利用可能なため、手動で設定する必要はありません。
+
+### 3. GitHub Actionsの権限設定
+
+Issueを作成するために、GitHub Actionsに適切な権限を付与する必要があります：
+
+1. リポジトリの **Settings > Actions > General** にアクセス
+2. **Workflow permissions** セクションで **"Read and write permissions"** を選択
+3. 保存
+
+### 4. GitHub Actionsの有効化
 
 - リポジトリの "Actions" タブで、ワークフローが有効になっていることを確認
 - 手動実行でテストする場合は、"Daily Tech News" ワークフローを選択して "Run workflow" をクリック
+- 実行後、リポジトリの "Issues" タブでニュースダイジェストが作成されます
 
 ## 実行スケジュール
 
@@ -113,7 +126,7 @@ daily-tech-news/
 │   │   └── publickey.py        # Publickeyフェッチャー
 │   ├── ai_analyzer.py          # Claude AI分析・要約
 │   ├── history_manager.py      # 履歴管理
-│   └── slack_notifier.py       # Slack通知
+│   └── github_notifier.py      # GitHub Issue通知
 ├── data/
 │   └── history.json            # 通知済みニュースの履歴
 ├── main.py                     # メインスクリプト
@@ -129,7 +142,7 @@ daily-tech-news/
 2. **重複チェック**: 過去に通知済みのニュースを除外
 3. **AI評価**: Claude AIが話題性を評価して上位5件を選定
 4. **要約生成**: 各ニュースを2-3行で要約し、ユーモアあるコメントを生成
-5. **Slack通知**: Block Kitでリッチなカード形式で通知
+5. **GitHub Issue作成**: Markdown形式でリッチなニュースダイジェストIssueを作成
 6. **履歴更新**: 通知したニュースをhistory.jsonに記録
 
 ## カスタマイズ
@@ -165,17 +178,17 @@ daily-tech-news/
 - APIの利用制限に達していないか確認
 - [Anthropic Console](https://console.anthropic.com/)でアカウント状況を確認
 
-### Slack通知が届かない
+### GitHub Issueが作成されない
 
-- Webhook URLが正しいか確認
-- Slackアプリが有効になっているか確認
-- 通知先のチャンネルが存在するか確認
+- `GITHUB_TOKEN`の権限が正しく設定されているか確認（Settings > Actions > General > Workflow permissions）
+- リポジトリ名が正しいか確認（`owner/repo`形式）
+- Actions実行ログでエラーメッセージを確認
 
 ### GitHub Actionsが実行されない
 
 - リポジトリのActionsが有効になっているか確認
 - cron設定がUTC時間で正しいか確認
-- Secretsが正しく設定されているか確認
+- Secretsが正しく設定されているか確認（`ANTHROPIC_API_KEY`のみ）
 
 ## ライセンス
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Daily Tech News Bot
-毎日技術ニュースを収集し、Claude AIで分析してSlackに通知する
+毎日技術ニュースを収集し、Claude AIで分析してGitHub Issueに通知する
 """
 import os
 import sys
@@ -17,7 +17,7 @@ from src.fetchers import (
 )
 from src.ai_analyzer import AIAnalyzer
 from src.history_manager import HistoryManager
-from src.slack_notifier import SlackNotifier
+from src.github_notifier import GitHubNotifier
 
 
 def main():
@@ -26,15 +26,22 @@ def main():
     load_dotenv()
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
-    webhook_url = os.getenv("SLACK_WEBHOOK_URL")
+    github_token = os.getenv("GITHUB_TOKEN")
+    github_repo = os.getenv("GITHUB_REPOSITORY")  # 形式: "owner/repo"
 
     if not api_key:
         print("Error: ANTHROPIC_API_KEY is not set")
         sys.exit(1)
 
-    if not webhook_url:
-        print("Error: SLACK_WEBHOOK_URL is not set")
+    if not github_token:
+        print("Error: GITHUB_TOKEN is not set")
         sys.exit(1)
+
+    if not github_repo or "/" not in github_repo:
+        print("Error: GITHUB_REPOSITORY is not set or invalid format (expected: owner/repo)")
+        sys.exit(1)
+
+    repo_owner, repo_name = github_repo.split("/", 1)
 
     print("=" * 60)
     print("Daily Tech News Bot - Starting")
@@ -52,7 +59,7 @@ def main():
 
     analyzer = AIAnalyzer(api_key)
     history = HistoryManager()
-    notifier = SlackNotifier(webhook_url)
+    notifier = GitHubNotifier(github_token, repo_owner, repo_name)
 
     # 古い履歴をクリーンアップ（30日より古いものを削除）
     history.cleanup_old_entries(days=30)
@@ -111,8 +118,8 @@ def main():
             })
             history.add_notified(news_item.url)
 
-    # Step 5: Slackに通知
-    print("\n[Step 5] Sending digest to Slack...")
+    # Step 5: GitHub Issueを作成
+    print("\n[Step 5] Creating GitHub Issue...")
     notifier.send_daily_digest(news_with_analysis)
 
     print("\n" + "=" * 60)
