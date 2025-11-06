@@ -11,6 +11,9 @@ on:
 jobs:
   fetch-and-notify:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
 
     steps:
       - name: Checkout repository
