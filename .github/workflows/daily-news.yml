@@ -35,14 +35,8 @@ jobs:
 
       - name: Run news bot
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.AWS_SESSION_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          CLAUDE_CODE_USE_BEDROCK: "1"
-          ANTHROPIC_MODEL: "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
-          ANTHROPIC_BEDROCK_BASE_URL: "https://openai-proxy-apigw-genai.api.linecorp.com"
-          AWS_REGION: "us-east-1"
-          AWS_ACCESS_KEY_ID: "anything_is_fine"
-          AWS_SECRET_ACCESS_KEY: "anything_is_fine"
         run: |
           python main.py
