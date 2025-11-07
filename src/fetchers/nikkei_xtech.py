@@ -19,7 +19,14 @@ class NikkeiXTechFetcher(NewsFetcher):
             news_items = []
 
             for entry in feed.entries[:20]:
-                published = datetime(*entry.published_parsed[:6])
+                # published_parsed がない場合は updated_parsed または現在時刻を使用
+                if hasattr(entry, 'published_parsed') and entry.published_parsed:
+                    published = datetime(*entry.published_parsed[:6])
+                elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
+                    published = datetime(*entry.updated_parsed[:6])
+                else:
+                    published = datetime.now()
+
                 news_items.append(NewsItem(
                     title=entry.title,
                     url=entry.link,
