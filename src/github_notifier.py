@@ -34,14 +34,16 @@ class GitHubNotifier:
         日次ニュースダイジェストをGitHub Issueとして作成
         news_items: NewsItemとその要約・コメントを含む辞書のリスト
         """
-        today = datetime.now().strftime('%Y年%m月%d日')
+        now = datetime.now()
+        today = now.strftime('%Y年%m月%d日')
+        datetime_str = now.strftime('%Y年%m月%d日 %H時')
 
         if not news_items:
-            self._create_no_news_issue(today)
+            self._create_no_news_issue(datetime_str)
             return
 
         # Issueのタイトルと本文を生成
-        title = f"📰 技術ニュースダイジェスト - {today}"
+        title = f"📰 技術ニュースダイジェスト - {datetime_str}"
         body = self._build_issue_body(news_items, today)
 
         # GitHub Issueを作成
@@ -115,12 +117,12 @@ class GitHubNotifier:
 
         return "\n".join(lines)
 
-    def _create_no_news_issue(self, today: str):
+    def _create_no_news_issue(self, datetime_str: str):
         """ニュースが取得できなかった場合のIssue"""
-        title = f"ℹ️ 本日のニュース - {today}"
+        title = f"ℹ️ 本日のニュース - {datetime_str}"
         body = f"""# ℹ️ 本日のニュース
 
-**日付:** {today}
+**日時:** {datetime_str}
 
 本日は新しいニュースがありませんでした。
 

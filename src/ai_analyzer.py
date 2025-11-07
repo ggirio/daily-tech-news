@@ -21,10 +21,13 @@ class AIAnalyzer:
                 aws_region=os.getenv("AWS_REGION", "us-east-1"),
                 base_url=bedrock_base_url
             )
+            # Bedrockの場合は環境変数からモデル名を取得
+            self.model = os.getenv("ANTHROPIC_MODEL", "anthropic.claude-3-5-sonnet-20241022-v2:0")
         else:
             # 通常のAnthropic APIを使用
             from anthropic import Anthropic
             self.client = Anthropic(api_key=api_key)
+            self.model = "claude-3-5-sonnet-20241022"
 
     def rank_news(self, news_items: List[NewsItem], top_n: int = 5) -> List[NewsItem]:
         """
@@ -54,7 +57,7 @@ class AIAnalyzer:
 
         try:
             message = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model=self.model,
                 max_tokens=1024,
                 messages=[{"role": "user", "content": prompt}]
             )
@@ -110,7 +113,7 @@ JSON形式で返してください:
 
         try:
             message = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model=self.model,
                 max_tokens=512,
                 messages=[{"role": "user", "content": prompt}]
             )
