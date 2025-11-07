@@ -14,12 +14,13 @@ class AIAnalyzer:
 
         if use_bedrock and bedrock_base_url:
             # LINE社内Bedrockプロキシを使用
+            # プロキシはx-api-keyヘッダーでの認証を期待するため、default_headersで渡す
             self.client = AnthropicBedrock(
                 aws_access_key=os.getenv("AWS_ACCESS_KEY_ID", "anything_is_fine"),
                 aws_secret_key=os.getenv("AWS_SECRET_ACCESS_KEY", "anything_is_fine"),
-                aws_session_token=api_key,  # セッショントークンをここに渡す
                 aws_region=os.getenv("AWS_REGION", "us-east-1"),
-                base_url=bedrock_base_url
+                base_url=bedrock_base_url,
+                default_headers={"x-api-key": api_key}
             )
             # Bedrockの場合は環境変数からモデル名を取得
             self.model = os.getenv("ANTHROPIC_MODEL", "anthropic.claude-3-5-sonnet-20241022-v2:0")
