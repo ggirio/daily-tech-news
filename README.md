@@ -67,45 +67,67 @@ GITHUB_REPOSITORY=owner/repo
 python main.py
 ```
 
-## GitHub Actionsでの自動実行設定
+## ローカルcronでの自動実行設定（推奨）
 
-### 1. GitHubリポジトリの作成
+**注意**: 社内のBedrockプロキシは社外（GitHub Actions）からアクセスできないため、ローカルのcronで実行する必要があります。
+
+### 1. cron実行スクリプトの確認
+
+既に `/tmp/cron_job.sh` にcron実行用のスクリプトがあります:
 
 ```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/your-username/daily-tech-news.git
-git push -u origin main
+#!/bin/bash
+cd /Users/kkatagir/IdeaProjects/test/daily-tech-news
+/Users/kkatagir/.pyenv/versions/3.12.4/bin/python main.py >> logs/cron.log 2>&1
 ```
 
-### 2. GitHub Secretsの設定
+### 2. ログディレクトリの作成
 
-リポジトリの Settings > Secrets and variables > Actions で以下のシークレットを追加:
+```bash
+mkdir -p logs
+```
 
-- `ANTHROPIC_API_KEY`: Claude APIキー
+### 3. crontabの設定
 
-**注意**: `GITHUB_TOKEN`と`GITHUB_REPOSITORY`はGitHub Actionsで自動的に利用可能なため、手動で設定する必要はありません。
+現在の設定（6時間ごとに実行）:
+```bash
+0 */6 * * * /bin/bash /tmp/cron_job.sh
+```
 
-### 3. GitHub Actionsの権限設定
+設定を確認:
+```bash
+crontab -l
+```
 
-Issueを作成するために、GitHub Actionsに適切な権限を付与する必要があります：
+設定を編集する場合:
+```bash
+crontab -e
+```
 
-1. リポジトリの **Settings > Actions > General** にアクセス
-2. **Workflow permissions** セクションで **"Read and write permissions"** を選択
-3. 保存
+### 4. 実行スケジュールの変更例
 
-### 4. GitHub Actionsの有効化
+```bash
+# 6時間ごと（0:00, 6:00, 12:00, 18:00）
+0 */6 * * * /bin/bash /tmp/cron_job.sh
 
-- リポジトリの "Actions" タブで、ワークフローが有効になっていることを確認
-- 手動実行でテストする場合は、"Daily Tech News" ワークフローを選択して "Run workflow" をクリック
-- 実行後、リポジトリの "Issues" タブでニュースダイジェストが作成されます
+# 平日の午前9時のみ
+0 9 * * 1-5 /bin/bash /tmp/cron_job.sh
+
+# 毎日午前9時
+0 9 * * * /bin/bash /tmp/cron_job.sh
+```
+
+### 5. ログの確認
+
+```bash
+tail -f logs/cron.log
+```
 
 ## 実行スケジュール
 
-- **自動実行**: 平日（月〜金）の午前9時（日本時間）
-- **手動実行**: GitHubのActionsタブからいつでも実行可能
+- **自動実行**: 6時間ごと（0:00, 6:00, 12:00, 18:00）
+- **手動実行**: `python main.py` でいつでも実行可能
+- **ログ確認**: `logs/cron.log` で実行履歴を確認可能
 
 ## プロジェクト構成
 
