@@ -12,11 +12,24 @@ class AIAnalyzer:
         use_bedrock = os.getenv("CLAUDE_CODE_USE_BEDROCK") == "1"
         bedrock_base_url = os.getenv("ANTHROPIC_BEDROCK_BASE_URL")
 
+        # デバッグ用: HTTP通信をログ出力
+        import logging
+        import httpx
+        logging.basicConfig(level=logging.DEBUG)
+        httpx_logger = logging.getLogger("httpx")
+        httpx_logger.setLevel(logging.WARNING)  # httpxのログは最小限に
+
         if use_bedrock and bedrock_base_url:
             # LINE社内Bedrockプロキシを使用
             # AWS_SESSION_TOKENにAPIキーを設定する方式
             # 環境変数のAWS_SESSION_TOKENを優先し、なければapi_keyを使用
             session_token = os.getenv("AWS_SESSION_TOKEN") or api_key
+            print(f"[DEBUG] Initializing AnthropicBedrock client:")
+            print(f"  - base_url: {bedrock_base_url}")
+            print(f"  - model: {os.getenv('ANTHROPIC_MODEL', 'anthropic.claude-3-5-sonnet-20241022-v2:0')}")
+            print(f"  - aws_region: {os.getenv('AWS_REGION', 'us-east-1')}")
+            print(f"  - session_token length: {len(session_token) if session_token else 0}")
+
             self.client = AnthropicBedrock(
                 aws_access_key=os.getenv("AWS_ACCESS_KEY_ID", "anything_is_fine"),
                 aws_secret_key=os.getenv("AWS_SECRET_ACCESS_KEY", "anything_is_fine"),
@@ -142,7 +155,10 @@ JSON形式で返してください:
             }
 
         except Exception as e:
+            import traceback
             print(f"Error summarizing news with AI: {e}")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Traceback: {traceback.format_exc()}")
             return {
                 "summary": news_item.description[:200] if news_item.description else "詳細は記事をご覧ください。",
                 "comment": "チェックしておきたいニュースです!"

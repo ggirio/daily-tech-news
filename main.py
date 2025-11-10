@@ -22,8 +22,19 @@ from src.github_notifier import GitHubNotifier
 
 def main():
     """メイン処理"""
-    # 環境変数を読み込み
-    load_dotenv()
+    # 環境変数を読み込み（既存の環境変数を上書きしない）
+    load_dotenv(override=False)
+
+    # デバッグ用: 環境変数の確認
+    print("[DEBUG] Environment variables:")
+    print(f"  ANTHROPIC_API_KEY: {'set' if os.getenv('ANTHROPIC_API_KEY') else 'not set'}")
+    print(f"  AWS_SESSION_TOKEN: {'set (len={})'.format(len(os.getenv('AWS_SESSION_TOKEN', ''))) if os.getenv('AWS_SESSION_TOKEN') else 'not set'}")
+    print(f"  CLAUDE_CODE_USE_BEDROCK: {os.getenv('CLAUDE_CODE_USE_BEDROCK')}")
+    print(f"  ANTHROPIC_BEDROCK_BASE_URL: {os.getenv('ANTHROPIC_BEDROCK_BASE_URL')}")
+    print(f"  ANTHROPIC_MODEL: {os.getenv('ANTHROPIC_MODEL')}")
+    print(f"  USER: {os.getenv('USER')}")
+    print(f"  HOME: {os.getenv('HOME')}")
+    print(f"  PWD: {os.getcwd()}")
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
     github_token = os.getenv("GITHUB_TOKEN")
